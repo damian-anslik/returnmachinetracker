@@ -6,19 +6,24 @@
 </div>
 
 <script>
-    const renderMap = () => {
+    const renderMap = async () => {
         const defaultLocation = [53.35, -6.30];
         const defaultZoom = 11;
-        let map = L.map('map');
+        let map = L.map('map').setView(defaultLocation, defaultZoom);
         if ("geolocation" in navigator) {
-            navigator.geolocation.getCurrentPosition((position) => {
-                userLocation = [position.coords.latitude, position.coords.longitude];
-                zoomLevel = 13;
-                map.setView(userLocation, zoomLevel);
+            navigator.permissions.query({ name: 'geolocation' }).then(permissionStatus => {
+                console.log(permissionStatus.state);
+                if (permissionStatus.state === 'granted' || permissionStatus.state === 'prompt') {
+                    navigator.geolocation.getCurrentPosition((position) => {
+                        userLocation = [position.coords.latitude, position.coords.longitude];
+                        zoomLevel = 14;
+                        map.setView(userLocation, zoomLevel);
+                    });
+                }
+                else {
+                    map.setView(defaultLocation, defaultZoom);
+                }
             });
-        }
-        else {
-            map.setView(defaultLocation, defaultZoom);
         }
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | <a href="https://www.flaticon.com/free-icons/location" title="location icons">Location icons created by kmg design - Flaticon</a>'
@@ -122,8 +127,8 @@
         }
 
         // Configure the marker icon
-        let iconHeight = 25;
-        let iconWidth = 25;
+        let iconHeight = 35;
+        let iconWidth = 35;
         customIcon = L.icon({
             iconUrl: customIconUrl,
             iconSize: [iconWidth * iconSizeFactor, iconHeight * iconSizeFactor],
@@ -136,7 +141,7 @@
         const marker = L.marker([location.lat, location.long], { icon: customIcon }).addTo(map);
         marker.on('click', () => {
             // Zoom in on the marker when clicked
-            map.setView([location.lat, location.long], 13);
+            map.setView([location.lat, location.long], 15);
         });
         marker.bindPopup(markerPopup);
         if (show) {
@@ -157,8 +162,9 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        const map = renderMap();
-        populateMapMarkers(map);
+        renderMap().then(map => {
+            populateMapMarkers(map);
+        });
     });
 </script>
 
