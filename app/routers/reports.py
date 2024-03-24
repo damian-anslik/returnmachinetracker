@@ -10,12 +10,10 @@ reports_router = APIRouter()
 templates = Jinja2Templates(directory="./app/templates")
 
 
-@reports_router.get("/robots.txt")
+@reports_router.get("/robots.txt", response_class=PlainTextResponse)
 def get_robots_txt():
-    robots_txt_content = """
-    User-agent: *
-    """
-    return PlainTextResponse(content=robots_txt_content)
+    data = """User-agent: *"""
+    return data
 
 
 @reports_router.get("/")

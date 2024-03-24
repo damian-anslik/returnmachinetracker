@@ -12,7 +12,6 @@
         let map = L.map('map').setView(defaultLocation, defaultZoom);
         if ("geolocation" in navigator) {
             navigator.permissions.query({ name: 'geolocation' }).then(permissionStatus => {
-                console.log(permissionStatus.state);
                 if (permissionStatus.state === 'granted' || permissionStatus.state === 'prompt') {
                     navigator.geolocation.getCurrentPosition((position) => {
                         userLocation = [position.coords.latitude, position.coords.longitude];
