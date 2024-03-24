@@ -32,6 +32,10 @@
     }
 
     const showMapMarker = (map, location, locationReports, show = false) => {
+        // Get the session_id cookie
+        const sessionId = document.cookie.split('; ').find(row => row.startsWith('session_id')).split('=')[1];
+        let userHasReportedLocation = locationReports.some(report => report.reporter_id === sessionId);
+
         const showSuccessIndicator = () => {
             reportFeedbackIndicator.hidden = false;
             reportFeedbackIndicator.id = 'success-indicator'
@@ -121,7 +125,7 @@
         reportButton.onclick = reportButtonHandler;
         markerPopup.appendChild(reportButton);
 
-        if (show) {
+        if (show || userHasReportedLocation) {
             reportButton.hidden = true;
             showSuccessIndicator();
         }
