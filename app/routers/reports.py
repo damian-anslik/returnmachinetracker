@@ -1,11 +1,19 @@
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.templating import Jinja2Templates
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.inmemory import InMemoryBackend
+from fastapi_cache.decorator import cache
 
 from ..services import reports as reports_service
 from ..services import locations as locations_service
 
 reports_router = APIRouter()
 templates = Jinja2Templates(directory="./app/templates")
+
+
+@reports_router.on_event("startup")
+async def startup():
+    FastAPICache.init(InMemoryBackend(), prefix="fastapi-cache")
 
 
 @reports_router.get("/")
