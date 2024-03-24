@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from uuid import uuid4
 
 from ..services import reports as reports_service
@@ -8,6 +8,14 @@ from ..services import locations as locations_service
 
 reports_router = APIRouter()
 templates = Jinja2Templates(directory="./app/templates")
+
+
+@reports_router.get("/robots.txt")
+def get_robots_txt():
+    robots_txt_content = """
+    User-agent: *
+    """
+    return PlainTextResponse(content=robots_txt_content)
 
 
 @reports_router.get("/")
