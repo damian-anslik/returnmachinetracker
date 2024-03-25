@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import JSONResponse, PlainTextResponse
-from uuid import uuid4
 
 from ..services import reports as reports_service
 from ..services import locations as locations_service
+from ..services import sessions as sessions_service
 
 reports_router = APIRouter()
 templates = Jinja2Templates(directory="./app/templates")
@@ -18,7 +18,7 @@ def get_robots_txt():
 
 @reports_router.get("/")
 async def get_home(request: Request):
-    session_id = request.cookies.get("session_id", str(uuid4()))
+    session_id = request.cookies.get("session_id", sessions_service.create_session())
     response = templates.TemplateResponse(
         "index.html",
         {
@@ -47,7 +47,12 @@ async def get_locations():
 
 @reports_router.post("/reports")
 async def create_report(request: Request, location_id: str):
-    session_id = request.cookies.get("session_id", str(uuid4()))
+    session_id = request.cookies.get("session_id")
+    if not session_id or not sessions_service.check_session_id_is_valid(session_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid session_id",
+        )
     try:
         reports_service.create_report(location_id, session_id)
         location_reports = reports_service.get_reports_by_location(
