@@ -18,7 +18,9 @@ def get_robots_txt():
 
 @reports_router.get("/")
 async def get_home(request: Request):
-    session_id = request.cookies.get("session_id", sessions_service.create_session())
+    session_id = request.cookies.get("session_id", None)
+    if not session_id or not sessions_service.check_session_id_is_valid(session_id):
+        session_id = sessions_service.create_session()
     response = templates.TemplateResponse(
         "index.html",
         {
