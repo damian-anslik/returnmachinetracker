@@ -198,6 +198,10 @@ const populateMapMarkers = async (map) => {
 
 document.addEventListener("DOMContentLoaded", () => {
   renderMap().then((map) => {
-    populateMapMarkers(map);
+    populateMapMarkers(map).then(() => {
+      document
+        .getElementsByClassName("loading-indicator-container")[0]
+        .remove();
+    });
   });
 });
