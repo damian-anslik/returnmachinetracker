@@ -18,7 +18,7 @@ def get_robots_txt():
 
 @reports_router.get("/")
 async def get_home(request: Request):
-    session_id = request.cookies.get("session_id", None)
+    session_id = request.cookies.get("session_id")
     if not session_id or not sessions_service.check_session_id_is_valid(session_id):
         session_id = sessions_service.create_session()
     response = templates.TemplateResponse(
@@ -32,10 +32,25 @@ async def get_home(request: Request):
 
 
 @reports_router.get("/reports")
-async def get_reports(num_days: int = 1):
+async def get_reports(request: Request, num_days: int = 1):
+    session_id = request.cookies.get("session_id")
+    if not session_id or not sessions_service.check_session_id_is_valid(session_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid session_id",
+        )
     reports = reports_service.get_reports(num_days=num_days)
+    parsed_reports = [
+        {
+            "id": report["id"],
+            "location_id": report["location_id"],
+            "created_at": report["created_at"],
+            "is_user_report": report["reporter_id"] == session_id,
+        }
+        for report in reports
+    ]
     return {
-        "reports": reports,
+        "reports": parsed_reports,
     }
 
 
@@ -58,12 +73,21 @@ async def create_report(request: Request, location_id: str):
     try:
         reports_service.create_report(location_id, session_id)
         location_reports = reports_service.get_reports_by_location(
-            location_id=location_id, num_days=1
+            location_id=location_id,
+            num_days=1,
         )
+        parsed_reports = [
+            {
+                "id": report["id"],
+                "location_id": report["location_id"],
+                "created_at": report["created_at"],
+                "is_user_report": report["reporter_id"] == session_id,
+            }
+            for report in location_reports
+        ]
         response = JSONResponse(
-            content={"reports": location_reports},
+            content={"reports": parsed_reports},
         )
-        response.set_cookie("session_id", session_id)
         return response
     except ValueError as e:
         raise HTTPException(

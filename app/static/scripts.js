@@ -1,6 +1,13 @@
 const renderMap = async () => {
   const defaultLocation = [53.35, -6.3];
   const defaultZoom = 11;
+  const tileLayerUrl = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+  const attributions = {
+    openStreetMap:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    icons:
+      '<a href="https://www.flaticon.com/free-icons/location" title="location icons">Location icons created by kmg design - Flaticon</a>',
+  };
   let map = L.map("map").setView(defaultLocation, defaultZoom);
   if ("geolocation" in navigator) {
     navigator.permissions
@@ -23,23 +30,14 @@ const renderMap = async () => {
         }
       });
   }
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | <a href="https://www.flaticon.com/free-icons/location" title="location icons">Location icons created by kmg design - Flaticon</a>',
+  let attribution = `${attributions.openStreetMap} | ${attributions.icons}`;
+  L.tileLayer(tileLayerUrl, {
+    attribution,
   }).addTo(map);
   return map;
 };
 
 const showMapMarker = (map, location, locationReports, show = false) => {
-  // Get the session_id cookie
-  const sessionId = document.cookie
-    .split("; ")
-    .find((row) => row.startsWith("session_id"))
-    .split("=")[1];
-  let userHasReportedLocation = locationReports.some(
-    (report) => report.reporter_id === sessionId
-  );
-
   const showSuccessIndicator = () => {
     reportFeedbackIndicator.hidden = false;
     reportFeedbackIndicator.id = "success-indicator";
@@ -84,6 +82,12 @@ const showMapMarker = (map, location, locationReports, show = false) => {
     return mostRecentReport;
   };
 
+  // Check if user has already reported this location
+  let userHasReportedLocation = locationReports.some(
+    (report) => report.is_user_report
+  );
+
+  // Create a popup for the marker
   let markerPopup = document.createElement("div");
 
   // Add information about the location
@@ -165,11 +169,24 @@ const showMapMarker = (map, location, locationReports, show = false) => {
   }
 };
 
+const fetchReports = async () => {
+  const response = await fetch("/reports");
+  return response.json();
+};
+
+const fetchLocations = async () => {
+  const response = await fetch("/locations");
+  return response.json();
+};
+
 const populateMapMarkers = async (map) => {
-  const reportsResponse = await fetch("/reports");
-  const locationsResponse = await fetch("/locations");
-  const reports = (await reportsResponse.json()).reports;
-  const locations = (await locationsResponse.json()).locations;
+  const [reportsResponse, locationsResponse] = await Promise.all([
+    fetchReports(),
+    fetchLocations(),
+  ]);
+
+  let reports = reportsResponse.reports;
+  let locations = locationsResponse.locations;
 
   locations.forEach((location) => {
     let locationReports = reports.filter(

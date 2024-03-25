@@ -32,9 +32,7 @@ def get_reports(num_days: int) -> list[dict]:
     return reports
 
 
-def get_reports_by_location(
-    location_id: str, num_days: int, include_reporter_id: bool = False
-) -> list[dict]:
+def get_reports_by_location(location_id: str, num_days: int) -> list[dict]:
     # Return from midnight of now minus num_days
     if num_days == 1:
         date_filter = datetime.datetime.now(datetime.UTC).replace(
@@ -73,7 +71,7 @@ def create_report(
     report_created_at: datetime.datetime = None,
 ) -> dict:
     # Check if the reporter has reported the location in the last 24 hours
-    MAX_REPORTS_PER_USER_PER_DAY = 3
+    MAX_REPORTS_PER_USER_PER_DAY = 2
     user_reports = get_user_reports_in_last_24_hours(reporter_id)
     if len(user_reports) >= MAX_REPORTS_PER_USER_PER_DAY:
         raise Exception("User has reached the maximum number of reports per day")
