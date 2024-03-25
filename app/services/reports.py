@@ -32,9 +32,7 @@ def get_reports(num_days: int) -> list[dict]:
     return reports
 
 
-def get_reports_by_location(
-    location_id: str, num_days: int, include_reporter_id: bool = False
-) -> list[dict]:
+def get_reports_by_location(location_id: str, num_days: int) -> list[dict]:
     # Return from midnight of now minus num_days
     if num_days == 1:
         date_filter = datetime.datetime.now(datetime.UTC).replace(
