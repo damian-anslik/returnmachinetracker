@@ -1,3 +1,7 @@
+let locations;
+let reports;
+let markersInViewport = [];
+
 const renderMap = async () => {
   const defaultLocation = [53.35, -6.3];
   const defaultZoom = 11;
@@ -63,10 +67,11 @@ const showMapMarker = (map, location, locationReports, show = false) => {
       reportButton.hidden = true;
       showSuccessIndicator();
       let locationReports = await response.json();
-      console.log(locationReports);
-      setTimeout(() => {
-        showMapMarker(map, location, locationReports.reports, true);
-      }, 3000);
+      let userReport = locationReports.reports.find(
+        (report) => report.is_user_report
+      );
+      reports.push(userReport);
+      showMapMarker(map, location, locationReports.reports, true);
     } else {
       showErrorIndicator();
     }
@@ -135,7 +140,7 @@ const showMapMarker = (map, location, locationReports, show = false) => {
   reportButton.onclick = reportButtonHandler;
   markerPopup.appendChild(reportButton);
 
-  if (show || userHasReportedLocation) {
+  if (userHasReportedLocation) {
     reportButton.hidden = true;
     showSuccessIndicator();
   }
@@ -167,6 +172,7 @@ const showMapMarker = (map, location, locationReports, show = false) => {
   if (show) {
     marker.openPopup();
   }
+  return marker;
 };
 
 const fetchReports = async () => {
@@ -184,15 +190,60 @@ const populateMapMarkers = async (map) => {
     fetchReports(),
     fetchLocations(),
   ]);
+  const getMapBounds = () => {
+    const boundsMargin = 0.01;
+    let bounds = map.getBounds();
+    bounds._northEast.lat += boundsMargin;
+    bounds._northEast.lng += boundsMargin;
+    bounds._southWest.lat -= boundsMargin;
+    bounds._southWest.lng -= boundsMargin;
+    return bounds;
+  };
+  reports = reportsResponse.reports;
+  locations = locationsResponse.locations;
 
-  let reports = reportsResponse.reports;
-  let locations = locationsResponse.locations;
-
-  locations.forEach((location) => {
+  // Load initial locations
+  let initialBounds = getMapBounds();
+  let initialLocations = locations.filter((location) =>
+    initialBounds.contains([location.lat, location.long])
+  );
+  markersInViewport = initialLocations.map((location) => {
     let locationReports = reports.filter(
       (report) => report.location_id === location.id
     );
-    showMapMarker(map, location, locationReports);
+    return {
+      marker: showMapMarker(map, location, locationReports),
+      location_id: location.id,
+    };
+  });
+
+  // Load markers for locations in the viewport
+  map.on("moveend", () => {
+    let currentBounds = getMapBounds();
+    let newLocationsInViewport = locations.filter((location) =>
+      currentBounds.contains([location.lat, location.long])
+    );
+    // Remove markers for locations that are no longer in the viewport
+    let locationsToRemove = markersInViewport.filter(
+      (marker) =>
+        !newLocationsInViewport.some(
+          (location) => location.id === marker.location_id
+        )
+    );
+    locationsToRemove.forEach((location) => {
+      location.marker.remove();
+    });
+    // Add markers for new locations in the viewport
+    newLocationsInViewport.forEach((location) => {
+      let locationReports = reports.filter(
+        (report) => report.location_id === location.id
+      );
+      let marker = showMapMarker(map, location, locationReports);
+      markersInViewport.push({
+        marker: marker,
+        location_id: location.id,
+      });
+    });
   });
 };
 
