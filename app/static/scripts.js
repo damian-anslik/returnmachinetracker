@@ -10,7 +10,7 @@ const renderMap = async () => {
     openStreetMap:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     icons:
-      '<a href="https://www.flaticon.com/free-icons/location" title="location icons">Location icons created by kmg design - Flaticon</a>',
+      '<a href="https://www.flaticon.com/free-icons/2" title="2 icons">2 icons created by hqrloveq - Flaticon</a>',
   };
   let map = L.map("map").setView(defaultLocation, defaultZoom);
   if ("geolocation" in navigator) {
@@ -53,18 +53,21 @@ const showMapMarker = (map, location, locationReports, show = false) => {
     reportFeedbackIndicator.id = "error-indicator";
     reportFeedbackIndicator.style.marginBottom = "0.5rem";
     reportFeedbackIndicator.innerText =
-      "Failed to submit report. Please try again.";
+      "Something went wrong. Please try again later.";
   };
 
-  const reportButtonHandler = async () => {
-    const response = await fetch(`/reports?location_id=${location.id}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+  const reportButtonHandler = async (isAvailable) => {
+    const response = await fetch(
+      `/reports?location_id=${location.id}&is_available=${isAvailable ? 1 : 0}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
     if (response.ok) {
-      reportButton.hidden = true;
+      reportButtonContainer.hidden = true;
       showSuccessIndicator();
       let userReport = await response.json();
       reports.push(userReport);
@@ -101,14 +104,19 @@ const showMapMarker = (map, location, locationReports, show = false) => {
     ).toLocaleString();
     //  = timestamp.toLocaleString();
     const reportText = document.createElement("p");
-    reportText.innerText = `Most recent report: ${localTimestamp}`;
+    console.log(lastReport.is_available);
+    if (lastReport.is_available) {
+      reportText.innerText = `Reported as available: ${localTimestamp}`;
+      customIconUrl = "/static/pin-green.png";
+    } else {
+      reportText.innerText = `Reported as unavailable: ${localTimestamp}`;
+      customIconUrl = "/static/pin-red.png";
+    }
     markerPopup.appendChild(reportText);
     // Show the total number of reports for this location
     const totalReports = document.createElement("p");
     totalReports.innerText = `Total reports within last 24 hours: ${locationReports.length}`;
     markerPopup.appendChild(totalReports);
-
-    customIconUrl = "/static/pin-red.png";
     iconSizeFactor = 1.5;
   } else {
     const noReports = document.createElement("p");
@@ -125,17 +133,30 @@ const showMapMarker = (map, location, locationReports, show = false) => {
   reportFeedbackIndicator.className = "report-feedback-indicator";
   markerPopup.appendChild(reportFeedbackIndicator);
 
-  // Add a button to report the location
-  const reportButton = document.createElement("button");
-  reportButton.className = "report-button";
-  reportButton.innerText = "Report as unavailable";
-  reportButton.onclick = reportButtonHandler;
-  markerPopup.appendChild(reportButton);
+  let reportButtonContainer = document.createElement("div");
+  reportButtonContainer.className = "report-button-container";
+
+  // Add a button to report the location as unavailable
+  const locationAvailableButton = document.createElement("button");
+  locationAvailableButton.className = "report-button-available";
+  locationAvailableButton.innerText = "Report as available";
+  locationAvailableButton.onclick = () => reportButtonHandler(true);
+  reportButtonContainer.appendChild(locationAvailableButton);
+
+  // Add a button to report the location as unavailable
+  const locationUnavailableButton = document.createElement("button");
+  locationUnavailableButton.className = "report-button-unavailable";
+  locationUnavailableButton.innerText = "Report as unavailable";
+  locationUnavailableButton.onclick = () => reportButtonHandler(false);
+  reportButtonContainer.appendChild(locationUnavailableButton);
 
   if (userHasReportedLocation) {
-    reportButton.hidden = true;
+    locationAvailableButton.hidden = true;
+    locationUnavailableButton.hidden = true;
     showSuccessIndicator();
   }
+
+  markerPopup.appendChild(reportButtonContainer);
 
   // Configure the marker icon
   let iconHeight = 35;

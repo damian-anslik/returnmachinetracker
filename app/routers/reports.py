@@ -53,6 +53,7 @@ async def get_reports(request: Request, num_days: int = 1):
             "id": report["id"],
             "location_id": report["location_id"],
             "created_at": report["created_at"],
+            "is_available": True if report["is_available"] == 1 else False,
             "is_user_report": report["reporter_id"] == session_id,
         }
         for report in reports
@@ -72,7 +73,7 @@ async def get_locations():
 
 
 @reports_router.post("/reports")
-async def create_report(request: Request, location_id: str):
+async def create_report(request: Request, location_id: str, is_available: int = 1):
     session_id = request.cookies.get("session_id")
     if not session_id or not sessions_service.check_session_id_is_valid(session_id):
         raise HTTPException(
@@ -80,12 +81,17 @@ async def create_report(request: Request, location_id: str):
             detail="Invalid session_id",
         )
     try:
-        user_report = reports_service.create_report(location_id, session_id)
+        user_report = reports_service.create_report(
+            location_id,
+            session_id,
+            True if is_available == 1 else False,
+        )
         user_report_data = {
             "id": user_report["id"],
             "location_id": user_report["location_id"],
             "created_at": user_report["created_at"],
             "is_user_report": True,
+            "is_available": True if is_available == 1 else False,
         }
         return user_report_data
     except ValueError as e:
