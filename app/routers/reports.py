@@ -80,24 +80,14 @@ async def create_report(request: Request, location_id: str):
             detail="Invalid session_id",
         )
     try:
-        reports_service.create_report(location_id, session_id)
-        location_reports = reports_service.get_reports_by_location(
-            location_id=location_id,
-            num_days=1,
-        )
-        parsed_reports = [
-            {
-                "id": report["id"],
-                "location_id": report["location_id"],
-                "created_at": report["created_at"],
-                "is_user_report": report["reporter_id"] == session_id,
-            }
-            for report in location_reports
-        ]
-        response = JSONResponse(
-            content={"reports": parsed_reports},
-        )
-        return response
+        user_report = reports_service.create_report(location_id, session_id)
+        user_report_data = {
+            "id": user_report["id"],
+            "location_id": user_report["location_id"],
+            "created_at": user_report["created_at"],
+            "is_user_report": True,
+        }
+        return user_report_data
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

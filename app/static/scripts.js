@@ -66,12 +66,10 @@ const showMapMarker = (map, location, locationReports, show = false) => {
     if (response.ok) {
       reportButton.hidden = true;
       showSuccessIndicator();
-      let locationReports = await response.json();
-      let userReport = locationReports.reports.find(
-        (report) => report.is_user_report
-      );
+      let userReport = await response.json();
       reports.push(userReport);
-      showMapMarker(map, location, locationReports.reports, true);
+      locationReports.push(userReport);
+      showMapMarker(map, location, locationReports, true);
     } else {
       showErrorIndicator();
     }

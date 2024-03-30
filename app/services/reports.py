@@ -1,6 +1,6 @@
 import datetime
-import uuid
 import supabase
+import uuid
 import os
 
 from .locations import get_location_details
