@@ -40,7 +40,6 @@ async def get_home(request: Request):
 
 
 @reports_router.get("/reports")
-@cache(expire=60)
 async def get_reports(request: Request, num_days: int = 1):
     session_id = request.cookies.get("session_id")
     if not session_id or not sessions_service.check_session_id_is_valid(session_id):
