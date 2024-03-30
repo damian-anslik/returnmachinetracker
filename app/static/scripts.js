@@ -104,7 +104,6 @@ const showMapMarker = (map, location, locationReports, show = false) => {
     ).toLocaleString();
     //  = timestamp.toLocaleString();
     const reportText = document.createElement("p");
-    console.log(lastReport.is_available);
     if (lastReport.is_available) {
       reportText.innerText = `Reported as available: ${localTimestamp}`;
       customIconUrl = "/static/pin-green.png";
