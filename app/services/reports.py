@@ -1,6 +1,6 @@
 import datetime
-import uuid
 import supabase
+import uuid
 import os
 
 from .locations import get_location_details
@@ -68,6 +68,7 @@ def get_user_reports_in_last_24_hours(reporter_id: str) -> list[dict]:
 def create_report(
     location_id: str,
     reporter_id: str,
+    is_available: bool,
     report_created_at: datetime.datetime = None,
 ) -> dict:
     # Check if the reporter has reported the location in the last 24 hours
@@ -90,6 +91,7 @@ def create_report(
         "location_id": location_id,
         "created_at": report_created_at.timestamp(),
         "reporter_id": reporter_id,
+        "is_available": is_available,
     }
     reports_table.insert(report_details).execute().data[0]
     return report_details

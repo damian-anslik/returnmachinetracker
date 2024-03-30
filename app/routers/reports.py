@@ -53,6 +53,7 @@ async def get_reports(request: Request, num_days: int = 1):
             "id": report["id"],
             "location_id": report["location_id"],
             "created_at": report["created_at"],
+            "is_available": True if report["is_available"] == 1 else False,
             "is_user_report": report["reporter_id"] == session_id,
         }
         for report in reports
@@ -72,7 +73,7 @@ async def get_locations():
 
 
 @reports_router.post("/reports")
-async def create_report(request: Request, location_id: str):
+async def create_report(request: Request, location_id: str, is_available: int = 1):
     session_id = request.cookies.get("session_id")
     if not session_id or not sessions_service.check_session_id_is_valid(session_id):
         raise HTTPException(
@@ -80,24 +81,19 @@ async def create_report(request: Request, location_id: str):
             detail="Invalid session_id",
         )
     try:
-        reports_service.create_report(location_id, session_id)
-        location_reports = reports_service.get_reports_by_location(
-            location_id=location_id,
-            num_days=1,
+        user_report = reports_service.create_report(
+            location_id,
+            session_id,
+            True if is_available == 1 else False,
         )
-        parsed_reports = [
-            {
-                "id": report["id"],
-                "location_id": report["location_id"],
-                "created_at": report["created_at"],
-                "is_user_report": report["reporter_id"] == session_id,
-            }
-            for report in location_reports
-        ]
-        response = JSONResponse(
-            content={"reports": parsed_reports},
-        )
-        return response
+        user_report_data = {
+            "id": user_report["id"],
+            "location_id": user_report["location_id"],
+            "created_at": user_report["created_at"],
+            "is_user_report": True,
+            "is_available": True if is_available == 1 else False,
+        }
+        return user_report_data
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

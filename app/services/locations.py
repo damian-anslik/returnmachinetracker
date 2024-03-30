@@ -17,7 +17,10 @@ def get_locations() -> list[dict]:
 
 
 def get_location_details(location_id: str) -> dict:
-    location_data = locations_table.select("*").eq("id", location_id).execute().data[0]
+    locations = get_locations()
+    location_data = next(
+        (location for location in locations if location["id"] == location_id), None
+    )
     if not location_data:
         raise ValueError(f"Invalid location_id={location_id}")
     return location_data
