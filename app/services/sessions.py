@@ -1,3 +1,4 @@
+import functools
 import supabase
 import os
 
@@ -14,6 +15,7 @@ def create_session() -> str:
     return session_id
 
 
+@functools.lru_cache(maxsize=15)
 def check_session_id_is_valid(session_id: str) -> bool:
     response = sessions_table.select("id").eq("id", session_id).execute()
     return len(response.data) > 0
