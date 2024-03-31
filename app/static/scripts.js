@@ -56,7 +56,23 @@ const showMapMarker = (map, location, locationReports, show = false) => {
       "Something went wrong. Please try again later.";
   };
 
+  // Create a container for the report buttons
+  let reportButtonContainer = document.createElement("div");
+  reportButtonContainer.className = "report-button-container";
+
+  // Add a button to report the location as unavailable
+  const locationAvailableButton = document.createElement("button");
+  locationAvailableButton.className = "report-button-available";
+  locationAvailableButton.innerText = "Report as available";
+
+  // Add a button to report the location as unavailable
+  const locationUnavailableButton = document.createElement("button");
+  locationUnavailableButton.className = "report-button-unavailable";
+  locationUnavailableButton.innerText = "Report as unavailable";
+
   const reportButtonHandler = async (isAvailable) => {
+    locationAvailableButton.disabled = true;
+    locationUnavailableButton.disabled = true;
     const response = await fetch(
       `/reports?location_id=${location.id}&is_available=${isAvailable ? 1 : 0}`,
       {
@@ -75,6 +91,8 @@ const showMapMarker = (map, location, locationReports, show = false) => {
       showMapMarker(map, location, locationReports, true);
     } else {
       showErrorIndicator();
+      locationAvailableButton.disabled = false;
+      locationUnavailableButton.disabled = false;
     }
   };
 
@@ -132,20 +150,9 @@ const showMapMarker = (map, location, locationReports, show = false) => {
   reportFeedbackIndicator.className = "report-feedback-indicator";
   markerPopup.appendChild(reportFeedbackIndicator);
 
-  let reportButtonContainer = document.createElement("div");
-  reportButtonContainer.className = "report-button-container";
-
-  // Add a button to report the location as unavailable
-  const locationAvailableButton = document.createElement("button");
-  locationAvailableButton.className = "report-button-available";
-  locationAvailableButton.innerText = "Report as available";
   locationAvailableButton.onclick = () => reportButtonHandler(true);
   reportButtonContainer.appendChild(locationAvailableButton);
 
-  // Add a button to report the location as unavailable
-  const locationUnavailableButton = document.createElement("button");
-  locationUnavailableButton.className = "report-button-unavailable";
-  locationUnavailableButton.innerText = "Report as unavailable";
   locationUnavailableButton.onclick = () => reportButtonHandler(false);
   reportButtonContainer.appendChild(locationUnavailableButton);
 
